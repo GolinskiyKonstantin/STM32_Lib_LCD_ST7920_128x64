@@ -186,13 +186,25 @@ main()==========================================================================
 	ST7920_Draw_pixel( 2, 2);
 
 	// рисуем разные фигуры
-	ST7920_Draw_line( 20, 20, 30, 30 );
-	ST7920_Draw_rectangle( 40, 40, 10, 20 );
-	ST7920_Draw_rectangle_filled(70, 30, 10, 20 );
-	ST7920_Draw_triangle( 20, 20, 50, 30, 100, 20 );
-	ST7920_Draw_triangle_filled( 20, 20, 51, 31, 100, 20 );
-	ST7920_Draw_circle( 40, 40, 20 );
-	ST7920_Draw_circle_filled( 40, 40, 20 );
+	ST7920_Draw_line( 20, 20, 30, 30, PIX_OFF );	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	ST7920_Draw_rectangle( 40, 40, 10, 20, PIX_OFF );	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	ST7920_Draw_rectangle_filled(70, 30, 10, 20, PIX_OFF );	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	ST7920_Draw_triangle( 20, 20, 50, 30, 100, 20, PIX_OFF );	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	ST7920_Draw_triangle_filled( 20, 20, 51, 31, 100, 20, PIX_OFF );	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	ST7920_Draw_circle( 40, 40, 20, PIX_OFF );	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	ST7920_Draw_circle_filled( 40, 40, 20, PIX_OFF );	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	
+	// рисуем прямоугольник с закругленными краями ( закрашенный )
+	ST7920_DrawFillRoundRect(10, 10, 50, 50, 10, PIX_OFF);	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	
+	// рисуем прямоугольник с закругленными краями ( пустотелый )
+	ST7920_DrawRoundRect(10, 10, 50, 50, 10, PIX_OFF);	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	
+	// рисуем полукруг ( правое или левое полушарие (параметр 1 или 2) ) закрашенный
+	ST7920_DrawFillCircleHelper(30, 30, 20 , 1, 0, PIX_OFF);	// цвет ( PIX_ON- белый , PIX_OFF -черный )
+	
+	// рисуем дугу ( четверть круга (параметр 1, 2, 4, 8) ) шириной 1 пиксель
+	ST7920_DrawCircleHelper(30, 30, 20 , 1, PIX_OFF);	// цвет ( PIX_ON- белый , PIX_OFF -черный )
 
 	// выводим сформированный буфер кадра на экран
 	ST7920_Update();
