@@ -27,6 +27,7 @@ extern "C" {
 #include "stdlib.h"
 #include "string.h"
 #include "stdbool.h"
+#include "math.h"
 
 /*
 	подключение LCD_128_64_ST7920:
@@ -81,7 +82,7 @@ enum PixelStatus{ PIX_OFF, PIX_ON };
 	extern SPI_HandleTypeDef ST7920_SPI_HAL;
 #endif
 
-
+#define PI 	3.14159265
 
 /** Screen width in pixels (tested with 128) */
 #define SCREEN_WIDTH 	128
@@ -351,8 +352,11 @@ void ST7920_DrawFillRoundRect(int16_t x, int16_t y, uint16_t width, uint16_t hei
 void ST7920_DrawRoundRect(int16_t x, int16_t y, uint16_t width, uint16_t height, int16_t cornerRadius, uint8_t color);
 //==============================================================================
 
+void ST7920_DrawArc(int16_t x0, int16_t y0, int16_t radius, int16_t startAngle, int16_t endAngle, uint8_t color, uint8_t thick);
+void ST7920_DrawLineThick(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_t color, uint8_t thick);
 
-	/********************************РАБОТА С ГЕОМЕТРИЧЕСКИМИ ФИГУРАМИ**********************************/
+
+/********************************РАБОТА С ГЕОМЕТРИЧЕСКИМИ ФИГУРАМИ**********************************/
 
 
 
