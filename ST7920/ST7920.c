@@ -18,6 +18,64 @@ uint8_t ST7920_buffer[SCREEN_WIDTH * SCREEN_HEIGHT / 8];
 // переменная для хранения ротации экрана, 0- поворот на 0 градусов ( по умолчанию ), 1- поворот на 180 градусов
 uint8_t rotation = 0;
 
+	//==============================================================================
+	// Процедура управления SPI
+	//==============================================================================
+	static void ST7920_CS_reset(void);
+	//==============================================================================
+
+	//==============================================================================
+	// Процедура управления SPI
+	//==============================================================================
+	static void ST7920_CS_set(void);
+	//==============================================================================
+
+	/*
+		******************************************************************************
+		* @brief	 ( описание ):
+		* @param	( параметры ):
+		* @return  ( возвращает ):
+
+		******************************************************************************
+	*/
+	static void ST7920_RST_reset( void );
+	//--------------------------------------------------------------------------------
+
+	/*
+		******************************************************************************
+		* @brief	 ( описание ):
+		* @param	( параметры ):
+		* @return  ( возвращает ):
+
+		******************************************************************************
+	*/
+	static void ST7920_RST_set( void );
+	//--------------------------------------------------------------------------------
+
+	/*
+		******************************************************************************
+		* @brief	 ( описание ):  отправка данных в SPI
+		* @param	( параметры ):	1 байт информации
+		* @return  ( возвращает ):
+
+		******************************************************************************
+	*/
+	static void ST7920_w_dat( uint8_t Dat );
+	//--------------------------------------------------------------------------------
+
+	/*
+		******************************************************************************
+		* @brief	 ( описание ):  отправка команды в SPI
+		* @param	( параметры ):	1 байт информации
+		* @return  ( возвращает ):
+
+		******************************************************************************
+	*/
+	static void ST7920_w_cmd( uint8_t Command );
+	//--------------------------------------------------------------------------------
+
+
+
 //==============================================================================
 // Процедура управления SPI
 //==============================================================================
@@ -161,7 +219,7 @@ void ST7920_Init( void ){
 
 	******************************************************************************
 */
-void ST7920_Graphic_mode(bool enable)   // 1-enable, 0-disable
+void ST7920_GraphicMode(bool enable)   // 1-enable, 0-disable
 {
 	if (enable) {
 		ST7920_w_cmd(0x34);  // Т.к. работаем в 8мибитном режиме, то выбираем 0x30 + RE = 1. Переходим в extended instruction.
@@ -185,7 +243,7 @@ void ST7920_Graphic_mode(bool enable)   // 1-enable, 0-disable
 
 	******************************************************************************
 */
-void ST7920_Display_On_Off(bool enable)   // 1-enable, 0-disable
+void ST7920_DisplayOnOff(bool enable)   // 1-enable, 0-disable
 {
 	if (enable) {
 		ST7920_Update();
@@ -233,7 +291,7 @@ void ST7920_Clear( void ) {
 			ST7920_w_dat(0x00);
 		}
 	}
-	ST7920_Clear_frame_buffer();
+	ST7920_ClearFrameBuffer();
 }
 //--------------------------------------------------------------------------------
 
@@ -261,10 +319,10 @@ void ST7920_DrawBitmap(int16_t x, int16_t y, const unsigned char* bitmap, int16_
             }
             if(byte & 0x80){
             	if(color){
-            		ST7920_Draw_pixel(x+i, y);
+            		ST7920_DrawPixel(x+i, y);
             	}
             	else{
-            		ST7920_Clear_pixel(x+i, y);
+            		ST7920_ClearPixel(x+i, y);
             	}
             }
         }
@@ -280,7 +338,7 @@ void ST7920_DrawBitmap(int16_t x, int16_t y, const unsigned char* bitmap, int16_
 
 	******************************************************************************
 */
-void ST7920_Draw_pixel(uint8_t x, uint8_t y) {
+void ST7920_DrawPixel(uint8_t x, uint8_t y) {
 /// Функция рисования точки.
 /// param\ x - координата по X(от 0 до 127)
 /// paran\ y - координата по Y(от 0 до 63)
@@ -302,7 +360,7 @@ void ST7920_Draw_pixel(uint8_t x, uint8_t y) {
 
 	******************************************************************************
 */
-void ST7920_Clear_pixel(uint8_t x, uint8_t y) {
+void ST7920_ClearPixel(uint8_t x, uint8_t y) {
 /// Функция удаления точки.
 /// param\ x - координата по X(от 0 до 127)
 /// paran\ y - координата по Y(от 0 до 63)
@@ -311,7 +369,7 @@ void ST7920_Clear_pixel(uint8_t x, uint8_t y) {
 			y = 63-y;
 	}
 	if (y < SCREEN_HEIGHT && x < SCREEN_WIDTH) {
-		ST7920_buffer[(x) + ((y / 8) * 128)] &= 0xFE << y % 8;
+		ST7920_buffer[(x) + ((y / 8) * 128)] &= ~(0x01 << (y % 8));
 	}
 }
 //--------------------------------------------------------------------------------
@@ -325,7 +383,7 @@ void ST7920_Clear_pixel(uint8_t x, uint8_t y) {
 								то инверсии не будет, будет только то что было сформировано после вызова данной функции )
 	******************************************************************************
 */
-void ST7920_rotation(uint8_t mode) {
+void ST7920_Rotation(uint8_t mode) {
 /// Функция ротации  дисплея ( только в графическом дисплее ).
 // вызвать перед формированием изображения ( если данные в массиве уже есть
 // то инверсии не будет, будет только то что было сформировано после вызова данной функции )
@@ -409,7 +467,7 @@ void ST7920_Inversion(uint16_t x_start, uint16_t x_end) {
 
 	******************************************************************************
 */
-void ST7920_Clear_frame_buffer(void) {
+void ST7920_ClearFrameBuffer(void) {
 /// Функция очистки буфера кадра
 	memset(ST7920_buffer, 0x00, sizeof(ST7920_buffer));
 }
@@ -497,10 +555,10 @@ void ST7920_DrawChar(int16_t x, int16_t y, unsigned char ch, FontDef_t* Font, ui
 					for (yy = 0; yy < multiplier; yy++){
 						for (xx = 0; xx < multiplier; xx++){
 							if(color){
-								ST7920_Draw_pixel(X+xx, Y+yy);
+								ST7920_DrawPixel(X+xx, Y+yy);
 							}
 							else{
-								ST7920_Clear_pixel(X+xx, Y+yy);
+								ST7920_ClearPixel(X+xx, Y+yy);
 							}
 						}
 					}
@@ -512,10 +570,10 @@ void ST7920_DrawChar(int16_t x, int16_t y, unsigned char ch, FontDef_t* Font, ui
 					for (yy = 0; yy < multiplier; yy++){
 						for (xx = 0; xx < multiplier; xx++){
 							if(!color){
-								ST7920_Draw_pixel(X+xx, Y+yy);
+								ST7920_DrawPixel(X+xx, Y+yy);
 							}
 							else{
-								ST7920_Clear_pixel(X+xx, Y+yy);
+								ST7920_ClearPixel(X+xx, Y+yy);
 							}
 						}
 					}
@@ -603,7 +661,7 @@ void ST7920_Print(int16_t x, int16_t y, char* str, FontDef_t* Font, uint8_t mult
 
 /********************************РАБОТА С ГЕОМЕТРИЧЕСКИМИ ФИГУРАМИ**********************************/
 
-void ST7920_Draw_line(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint8_t color) {
+void ST7920_DrawLine(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y_end, uint8_t color) {
 	int dx = (x_end >= x_start) ? x_end - x_start : x_start - x_end;
 	int dy = (y_end >= y_start) ? y_end - y_start : y_start - y_end;
 	int sx = (x_start < x_end) ? 1 : -1;
@@ -612,10 +670,10 @@ void ST7920_Draw_line(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y
 
 	for (;;) {
 		if(color){
-			ST7920_Draw_pixel(x_start, y_start);
+			ST7920_DrawPixel(x_start, y_start);
 		}
 		else{
-			ST7920_Clear_pixel(x_start, y_start);
+			ST7920_ClearPixel(x_start, y_start);
 		}
 		
 		if (x_start == x_end && y_start == y_end)
@@ -634,7 +692,7 @@ void ST7920_Draw_line(uint8_t x_start, uint8_t y_start, uint8_t x_end, uint8_t y
 
 
 /*--------------------------------Вывести пустотелый прямоугольник---------------------------------*/
-void ST7920_Draw_rectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color) {
+void ST7920_DrawRectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color) {
 /// Вывести пустотелый прямоугольник
 /// \param x - начальная точка по оси "x"
 /// \param y - начальная точка по оси "y"
@@ -650,15 +708,15 @@ void ST7920_Draw_rectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t heig
 	}
 
 	/*Рисуем линии*/
-	ST7920_Draw_line(x, y, x + width, y, color); /*Верх прямоугольника*/
-	ST7920_Draw_line(x, y + height, x + width, y + height, color); /*Низ прямоугольника*/
-	ST7920_Draw_line(x, y, x, y + height, color); /*Левая сторона прямоугольника*/
-	ST7920_Draw_line(x + width, y, x + width, y + height, color); /*Правая сторона прямоугольника*/
+	ST7920_DrawLine(x, y, x + width, y, color); /*Верх прямоугольника*/
+	ST7920_DrawLine(x, y + height, x + width, y + height, color); /*Низ прямоугольника*/
+	ST7920_DrawLine(x, y, x, y + height, color); /*Левая сторона прямоугольника*/
+	ST7920_DrawLine(x + width, y, x + width, y + height, color); /*Правая сторона прямоугольника*/
 }
 /*--------------------------------Вывести пустотелый прямоугольник---------------------------------*/
 
 /*-------------------------------Вывести закрашенный прямоугольник---------------------------------*/
-void ST7920_Draw_rectangle_filled(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color) {
+void ST7920_DrawRectangleFilled(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint8_t color) {
 /// Вывести закрашенный прямоугольник
 /// \param x - начальная точка по оси "x"
 /// \param y - начальная точка по оси "y"
@@ -675,13 +733,13 @@ void ST7920_Draw_rectangle_filled(uint16_t x, uint16_t y, uint16_t width, uint16
 
 	/*Рисуем линии*/
 	for (uint8_t i = 0; i <= height; i++) {
-		ST7920_Draw_line(x, y + i, x + width, y + i, color);
+		ST7920_DrawLine(x, y + i, x + width, y + i, color);
 	}
 }
 /*-------------------------------Вывести закрашенный прямоугольник---------------------------------*/
 
 /*---------------------------------Вывести пустотелую окружность-----------------------------------*/
-void ST7920_Draw_circle(uint8_t x, uint8_t y, uint8_t radius, uint8_t color) {
+void ST7920_DrawCircle(uint8_t x, uint8_t y, uint8_t radius, uint8_t color) {
 /// Вывести пустотелую окружность
 /// \param x - точка центра окружности по оси "x"
 /// \param y - точка центра окружности по оси "y"
@@ -694,16 +752,16 @@ void ST7920_Draw_circle(uint8_t x, uint8_t y, uint8_t radius, uint8_t color) {
 	int x_0 = 0;
 	
 	if(color){
-		ST7920_Draw_pixel(x, y + radius);
-		ST7920_Draw_pixel(x, y - radius);
-		ST7920_Draw_pixel(x + radius, y);
-		ST7920_Draw_pixel(x - radius, y);
+		ST7920_DrawPixel(x, y + radius);
+		ST7920_DrawPixel(x, y - radius);
+		ST7920_DrawPixel(x + radius, y);
+		ST7920_DrawPixel(x - radius, y);
 	}
 	else{
-		ST7920_Clear_pixel(x, y + radius);
-		ST7920_Clear_pixel(x, y - radius);
-		ST7920_Clear_pixel(x + radius, y);
-		ST7920_Clear_pixel(x - radius, y);
+		ST7920_ClearPixel(x, y + radius);
+		ST7920_ClearPixel(x, y - radius);
+		ST7920_ClearPixel(x + radius, y);
+		ST7920_ClearPixel(x - radius, y);
 	}
 	
 
@@ -718,31 +776,31 @@ void ST7920_Draw_circle(uint8_t x, uint8_t y, uint8_t radius, uint8_t color) {
 		ddF_x += 2;
 		f += ddF_x;
 		if(color){
-			ST7920_Draw_pixel(x + x_0, y + y_0);
-			ST7920_Draw_pixel(x - x_0, y + y_0);
-			ST7920_Draw_pixel(x + x_0, y - y_0);
-			ST7920_Draw_pixel(x - x_0, y - y_0);
-			ST7920_Draw_pixel(x + y_0, y + x_0);
-			ST7920_Draw_pixel(x - y_0, y + x_0);
-			ST7920_Draw_pixel(x + y_0, y - x_0);
-			ST7920_Draw_pixel(x - y_0, y - x_0);
+			ST7920_DrawPixel(x + x_0, y + y_0);
+			ST7920_DrawPixel(x - x_0, y + y_0);
+			ST7920_DrawPixel(x + x_0, y - y_0);
+			ST7920_DrawPixel(x - x_0, y - y_0);
+			ST7920_DrawPixel(x + y_0, y + x_0);
+			ST7920_DrawPixel(x - y_0, y + x_0);
+			ST7920_DrawPixel(x + y_0, y - x_0);
+			ST7920_DrawPixel(x - y_0, y - x_0);
 		}
 		else{
-			ST7920_Clear_pixel(x + x_0, y + y_0);
-			ST7920_Clear_pixel(x - x_0, y + y_0);
-			ST7920_Clear_pixel(x + x_0, y - y_0);
-			ST7920_Clear_pixel(x - x_0, y - y_0);
-			ST7920_Clear_pixel(x + y_0, y + x_0);
-			ST7920_Clear_pixel(x - y_0, y + x_0);
-			ST7920_Clear_pixel(x + y_0, y - x_0);
-			ST7920_Clear_pixel(x - y_0, y - x_0);
+			ST7920_ClearPixel(x + x_0, y + y_0);
+			ST7920_ClearPixel(x - x_0, y + y_0);
+			ST7920_ClearPixel(x + x_0, y - y_0);
+			ST7920_ClearPixel(x - x_0, y - y_0);
+			ST7920_ClearPixel(x + y_0, y + x_0);
+			ST7920_ClearPixel(x - y_0, y + x_0);
+			ST7920_ClearPixel(x + y_0, y - x_0);
+			ST7920_ClearPixel(x - y_0, y - x_0);
 		}
 	}
 }
 /*---------------------------------Вывести пустотелую окружность-----------------------------------*/
 
 /*--------------------------------Вывести закрашенную окружность-----------------------------------*/
-void ST7920_Draw_circle_filled(int16_t x, int16_t y, int16_t radius, uint8_t color) {
+void ST7920_DrawCircleFilled(int16_t x, int16_t y, int16_t radius, uint8_t color) {
 /// Вывести закрашенную окружность
 /// \param x - точка центра окружности по оси "x"
 /// \param y - точка центра окружности по оси "y"
@@ -755,21 +813,21 @@ void ST7920_Draw_circle_filled(int16_t x, int16_t y, int16_t radius, uint8_t col
 	int16_t y_0 = radius;
 
 	if(color){
-		ST7920_Draw_pixel(x, y + radius);
-		ST7920_Draw_pixel(x, y - radius);
-		ST7920_Draw_pixel(x + radius, y);
-		ST7920_Draw_pixel(x - radius, y);
+		ST7920_DrawPixel(x, y + radius);
+		ST7920_DrawPixel(x, y - radius);
+		ST7920_DrawPixel(x + radius, y);
+		ST7920_DrawPixel(x - radius, y);
 	}
 	else{
-		ST7920_Clear_pixel(x, y + radius);
-		ST7920_Clear_pixel(x, y - radius);
-		ST7920_Clear_pixel(x + radius, y);
-		ST7920_Clear_pixel(x - radius, y);
+		ST7920_ClearPixel(x, y + radius);
+		ST7920_ClearPixel(x, y - radius);
+		ST7920_ClearPixel(x + radius, y);
+		ST7920_ClearPixel(x - radius, y);
 	}
 	
 	
 	
-	ST7920_Draw_line(x - radius, y, x + radius, y, color);
+	ST7920_DrawLine(x - radius, y, x + radius, y, color);
 
 	while (x_0 < y_0) {
 		if (f >= 0) {
@@ -781,16 +839,16 @@ void ST7920_Draw_circle_filled(int16_t x, int16_t y, int16_t radius, uint8_t col
 		ddF_x += 2;
 		f += ddF_x;
 
-		ST7920_Draw_line(x - x_0, y + y_0, x + x_0, y + y_0, color);
-		ST7920_Draw_line(x + x_0, y - y_0, x - x_0, y - y_0, color);
-		ST7920_Draw_line(x + y_0, y + x_0, x - y_0, y + x_0, color);
-		ST7920_Draw_line(x + y_0, y - x_0, x - y_0, y - x_0, color);
+		ST7920_DrawLine(x - x_0, y + y_0, x + x_0, y + y_0, color);
+		ST7920_DrawLine(x + x_0, y - y_0, x - x_0, y - y_0, color);
+		ST7920_DrawLine(x + y_0, y + x_0, x - y_0, y + x_0, color);
+		ST7920_DrawLine(x + y_0, y - x_0, x - y_0, y - x_0, color);
 	}
 }
 /*--------------------------------Вывести закрашенную окружность-----------------------------------*/
 
 /*-----------------------------------Вывести пустотелый треугольник--------------------------------*/
-void ST7920_Draw_triangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, uint8_t color) {
+void ST7920_DrawTriangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, uint8_t color) {
 /// Вывести пустотелый треугольник
 /// \param x_1 - первая точка треугольника. Координата по оси "x"
 /// \param y_1 - первая точка треугольника. Координата по оси "y"
@@ -799,14 +857,14 @@ void ST7920_Draw_triangle(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, ui
 /// \param x_3 - третья точка треугольника. Координата по оси "x"
 /// \param y_3 - третья точка треугольника. Координата по оси "y"
 
-	ST7920_Draw_line(x1, y1, x2, y2, color);
-	ST7920_Draw_line(x2, y2, x3, y3, color);
-	ST7920_Draw_line(x3, y3, x1, y1, color);
+	ST7920_DrawLine(x1, y1, x2, y2, color);
+	ST7920_DrawLine(x2, y2, x3, y3, color);
+	ST7920_DrawLine(x3, y3, x1, y1, color);
 }
 /*-----------------------------------Вывести пустотелый треугольник--------------------------------*/
 
 /*----------------------------------Вывести закрашенный треугольник--------------------------------*/
-void ST7920_Draw_triangle_filled(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, uint8_t color) {
+void ST7920_DrawTriangleFilled(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t x3, uint16_t y3, uint8_t color) {
 /// Вывести закрашенный треугольник
 /// \param x_1 - первая точка треугольника. Координата по оси "x"
 /// \param y_1 - первая точка треугольника. Координата по оси "y"
@@ -867,7 +925,7 @@ int16_t curpixel = 0;
 	}
 
 	for (curpixel = 0; curpixel <= numpixels; curpixel++) {
-		ST7920_Draw_line(x, y, x3, y3, color);
+		ST7920_DrawLine(x, y, x3, y3, color);
 
 		num += numadd;
 		if (num >= den) {
@@ -969,38 +1027,38 @@ void ST7920_DrawCircleHelper(int16_t x0, int16_t y0, int16_t radius, int8_t quad
         f += ddF_x;
 		if(color){
 			if (quadrantMask & 0x4) {
-				ST7920_DrawPixel(x0 + x, y0 + y, color);
-				ST7920_DrawPixel(x0 + y, y0 + x, color);
+				ST7920_DrawPixel(x0 + x, y0 + y);
+				ST7920_DrawPixel(x0 + y, y0 + x);
 			}
 			if (quadrantMask & 0x2) {
-				ST7920_DrawPixel(x0 + x, y0 - y, color);
-				ST7920_DrawPixel(x0 + y, y0 - x, color);
+				ST7920_DrawPixel(x0 + x, y0 - y);
+				ST7920_DrawPixel(x0 + y, y0 - x);
 			}
 			if (quadrantMask & 0x8) {
-				ST7920_DrawPixel(x0 - y, y0 + x, color);
-				ST7920_DrawPixel(x0 - x, y0 + y, color);
+				ST7920_DrawPixel(x0 - y, y0 + x);
+				ST7920_DrawPixel(x0 - x, y0 + y);
 			}
 			if (quadrantMask & 0x1) {
-				ST7920_DrawPixel(x0 - y, y0 - x, color);
-				ST7920_DrawPixel(x0 - x, y0 - y, color);
+				ST7920_DrawPixel(x0 - y, y0 - x);
+				ST7920_DrawPixel(x0 - x, y0 - y);
 			}
 		}
 		else{
 			if (quadrantMask & 0x4) {
-				ST7920_Clear_pixel(x0 + x, y0 + y, color);
-				ST7920_Clear_pixel(x0 + y, y0 + x, color);
+				ST7920_ClearPixel(x0 + x, y0 + y);
+				ST7920_ClearPixel(x0 + y, y0 + x);
 			}
 			if (quadrantMask & 0x2) {
-				ST7920_Clear_pixel(x0 + x, y0 - y, color);
-				ST7920_Clear_pixel(x0 + y, y0 - x, color);
+				ST7920_ClearPixel(x0 + x, y0 - y);
+				ST7920_ClearPixel(x0 + y, y0 - x);
 			}
 			if (quadrantMask & 0x8) {
-				ST7920_Clear_pixel(x0 - y, y0 + x, color);
-				ST7920_Clear_pixel(x0 - x, y0 + y, color);
+				ST7920_ClearPixel(x0 - y, y0 + x);
+				ST7920_ClearPixel(x0 - x, y0 + y);
 			}
 			if (quadrantMask & 0x1) {
-				ST7920_Clear_pixel(x0 - y, y0 - x, color);
-				ST7920_Clear_pixel(x0 - x, y0 - y, color);
+				ST7920_ClearPixel(x0 - y, y0 - x);
+				ST7920_ClearPixel(x0 - x, y0 - y);
 			}
 		}
         
@@ -1020,7 +1078,7 @@ void ST7920_DrawRoundRect(int16_t x, int16_t y, uint16_t width, uint16_t height,
 	
   ST7920_DrawLine(x + cornerRadius, y, x + cornerRadius + width -1 - 2 * cornerRadius, y, color);         // Top
   ST7920_DrawLine(x + cornerRadius, y + height - 1, x + cornerRadius + width - 1 - 2 * cornerRadius, y + height - 1, color); // Bottom
-  ST7920_DrawLine(x, y + cornerRadius, x, y + cornerRadius + height - 1 - 2 * cornerRadius, color, color);         // Left
+  ST7920_DrawLine(x, y + cornerRadius, x, y + cornerRadius + height - 1 - 2 * cornerRadius, color);         // Left
   ST7920_DrawLine(x + width - 1, y + cornerRadius, x + width - 1, y + cornerRadius + height - 1 - 2 * cornerRadius, color); // Right
 	
   // draw four corners
@@ -1047,10 +1105,10 @@ void ST7920_DrawLineThick(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_
 	}
 	else{
 		if(color){
-			ST7920_DrawPixel(x2, y2, color);
+			ST7920_DrawPixel(x2, y2);
 		}
 		else{
-			ST7920_Clear_pixel(x2, y2, color);
+			ST7920_ClearPixel(x2, y2);
 		}
 	}
 
@@ -1060,10 +1118,10 @@ void ST7920_DrawLineThick(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint8_
 		}
 		else{
 			if(color){
-				ST7920_DrawPixel(x1, y1, color);
+				ST7920_DrawPixel(x1, y1);
 			}
 			else{
-				ST7920_Clear_pixel(x1, y1, color);
+				ST7920_ClearPixel(x1, y1);
 			}
 		}
 
